@@ -1,1 +1,16 @@
-/krebs/util/bin/naturalvoices.att
+#!/bin/sh
+cd $(dirname $(readlink -f $0))
+
+. ../lib/att.sh
+
+: ${1?please provide \$1 as text}
+
+text=$(echo $* | sed 's/ /+/g')
+voice="${voice:-reiner}"
+
+OUTFILE="`mktemp /tmp/voice.XXXXXXXX`"
+trap "rm $OUTFILE" TERM INT EXIT
+
+get_tts "$text"
+
+play_file "$OUTFILE"

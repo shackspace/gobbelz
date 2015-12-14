@@ -7,6 +7,10 @@ import os
 import subprocess
 from urllib.request import urlopen
 from mpd import MPDClient
+from gtts import gTTS
+
+# TODO: we will be owned by this
+
 
 app = Flask(__name__)
 app.config.update(Debug=True)
@@ -20,7 +24,7 @@ def mpd_status():
     client = MPDClient()
     client.timeout = 10
     client.idletimeout = None
-    client.connect("mpd.shack", 6600)
+    client.connect("lounge.mpd.shack", 6600)
     answer = client.currentsong()
     state = client.status()
     client.close()
@@ -60,7 +64,7 @@ def play():
     client = MPDClient()
     client.timeout = 10
     client.idletimeout = None
-    client.connect("mpd.shack", 6600)
+    client.connect("lounge.mpd.shack", 6600)
     client.play()
     client.close()
     client.disconnect()
@@ -71,7 +75,7 @@ def pause():
     client = MPDClient()
     client.timeout = 10
     client.idletimeout = None
-    client.connect("mpd.shack", 6600)
+    client.connect("lounge.mpd.shack", 6600)
     client.pause()
     client.close()
     client.disconnect()
@@ -83,10 +87,30 @@ def say():
         data = json.loads(request.data.decode())
         text = data['text']
         if len(text) <= 300:
-            print(text)
-            args = ['espeak', '-vde']
-            args.append(text)
-            p = subprocess.check_call(args)
+            try:
+                print(text)
+                from os.path import join,exists
+                cache_dir='/opt/gobbelz-cache'
+                cache_file = join(cache_dir,text.replace('/','_')+".mp3")
+                if not exists(cache_file):
+                    print("adding to cache")
+                    # after this worked
+                    try:
+                        tts = gTTS(text=text, lang="de")
+                        tmp_file = "/tmp/gobbelz.mp3"
+                        tts.save(tmp_file)
+                    except:
+                         raise
+                         #return jsonify(status="error",error="could not retrieve tts from google")
+                    import os
+                    print("renaming")
+                    os.rename(tmp_file,cache_file)
+                else:
+                   print("playing from cache")
+                return_code = subprocess.check_call(["mpg123", cache_file])
+            except:
+                print("falling back to espeak ...")
+                subprocess.check_call(['espeak', '-vde',text])
         else:
             return(jsonify(
                 status='error',
@@ -106,7 +130,7 @@ def say():
             return "error: Your text exceeded the limit of 300 chars"
         
         return "success: {}".format(text)
-	
+  
     else:
         return(jsonify(
             status='error',
