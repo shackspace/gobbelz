@@ -1,5 +1,4 @@
-#!/bin/bash
-
-tmux new-session -d -s gobbelz 
-tmux send-keys -t gobbelz "/home/hohden/gobbelz/routes.py"$'\n'
-sleep 2
+#!/bin/sh
+cd "$(dirname "$(readlink -f "$0")")"
+. bin/activate
+python3 routes.py
