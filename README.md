@@ -1,3 +1,5 @@
+migrated to https://codeberg.org/shackspace/gobbelz
+
 # Gobbelz
 	
 	virtualenv -p python3 .
